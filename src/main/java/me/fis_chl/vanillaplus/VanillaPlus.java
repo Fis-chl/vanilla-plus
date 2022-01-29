@@ -22,7 +22,7 @@ import java.nio.file.Path;
         name = "VanillaPlus",
         description = "Extra commands for use with Sponge 7.2.0 (mc version 1.12.2)",
         authors = {
-                "Lubloom"
+                "Fis-chl"
         }
 )
 public class VanillaPlus {
