@@ -99,6 +99,15 @@ public class VanillaPlus {
         registerCommand(tptoggleSpec, "tptoggle", "tpt");
 
         // Warp commands
+        // warp command
+        CommandSpec warpSpec = CommandSpec.builder()
+                .description(Text.of("Teleport to the specified warp"))
+                .permission("vp.warp")
+                .arguments(
+                        GenericArguments.onlyOne(GenericArguments.string(Text.of("warpName")))
+                ).executor(new WarpCommand(warpHandler))
+                .build();
+        registerCommand(warpSpec, "warp");
         // setwarp command
         CommandSpec setwarpSpec = CommandSpec.builder()
                 .description(Text.of("Set a warp with the specified name"))
@@ -109,6 +118,16 @@ public class VanillaPlus {
                 .executor(new SetWarpCommand(warpHandler))
                 .build();
         registerCommand(setwarpSpec, "setwarp", "swarp", "createwarp", "cwarp");
+        // deletewarp command
+        CommandSpec deletewarpSpec = CommandSpec.builder()
+                .description(Text.of("Delete the warp with the specified name"))
+                .permission("vp.deletewarp")
+                .arguments(
+                        GenericArguments.onlyOne(GenericArguments.string(Text.of("warpName")))
+                )
+                .executor(new DeleteWarpCommand(warpHandler))
+                .build();
+        registerCommand(deletewarpSpec, "deletewarp", "delwarp");
         // listwarps command
         CommandSpec listwarpSpec = CommandSpec.builder()
                 .description(Text.of("List all available warps"))

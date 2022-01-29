@@ -9,6 +9,11 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -18,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class WarpHandler {
 
@@ -39,7 +45,7 @@ public class WarpHandler {
 
     public boolean createWarp(Location<World> location, String name) {
         Warp warp = new Warp(location, name);
-        if (getWarp(name) != null) {
+        if (getWarp(name) == null) {
             warps.add(warp);
             saveWarpData(warp, false);
             return true;
@@ -62,13 +68,36 @@ public class WarpHandler {
         return warps;
     }
 
-    private Warp getWarp(String name) {
+    public Warp getWarp(String name) {
         for (Warp warp : warps) {
             if (warp.getName().equals(name)) {
                 return warp;
             }
         }
         return null;
+    }
+
+    public void teleportPlayer(Player player, Warp warp) {
+        PluginContainer plugin = Sponge.getPluginManager().getPlugin("vanillaplus").get();
+        Task.Builder taskBuilder = Task.builder();
+        player.sendMessage(
+                Text.join(
+                        Text.builder(
+                            "Teleporting to warp '"
+                        ).color(TextColors.GREEN).build(),
+                        Text.builder(
+                                warp.getName()
+                        ).color(TextColors.LIGHT_PURPLE).build(),
+                        Text.builder(
+                                "' in 3 seconds..."
+                        ).color(TextColors.GREEN).build()
+                )
+        );
+        taskBuilder.execute(
+                () -> {
+                    player.setLocation(warp.getLocation());
+                }
+        ).delay(3, TimeUnit.SECONDS).submit(plugin);
     }
 
     /**
@@ -109,7 +138,7 @@ public class WarpHandler {
             }
             loader.save(rootNode);
         } catch (IOException | ObjectMappingException e) {
-            logger.error("Error loading 'teleportdata.hocon'");
+            logger.error("Error loading 'warpdata.hocon'");
         }
     }
 
@@ -146,13 +175,14 @@ public class WarpHandler {
                     World world = Sponge.getServer().getWorld(worldId).orElse(null);
                     if (world != null) {
                         Location<World> warpLoc = world.getLocation(xyz[0], xyz[1], xyz[2]);
-                        warps.add(new Warp(warpLoc, node.getString()));
+                        warps.add(new Warp(warpLoc, (String) nodeName));
                     }
                 }
             }
             loader.save(rootNode);
+            logger.info("Loaded 'warpdata.hocon' successfully");
         } catch (IOException | ObjectMappingException e) {
-            logger.error("Error loading 'teleportdata.hocon'");
+            logger.error("Error loading 'warpdata.hocon'");
         }
     }
 }
