@@ -23,30 +23,38 @@ public class TpaCommand implements CommandExecutor {
         if (src instanceof Player) {  // Ensure that a player sends the command
             Player requester = (Player) src;
             Player destination = (Player) args.getOne("destinationPlayer").orElse(null);
-            if (destination != null) {  // Checks that there is a destination argument
-                int result = teleportHandler.createRequest(requester, destination);
-                if (result == 0) {
+            if (requester.equals(destination)) {
+                requester.sendMessage(
+                        Text.builder(
+                                "You can't send a teleport request to yourself!"
+                        ).color(TextColors.RED).build()
+                );
+            } else {
+                if (destination != null) {  // Checks that there is a destination argument
+                    int result = teleportHandler.createRequest(requester, destination);
+                    if (result == 0) {
+                        requester.sendMessage(
+                                Text.builder(
+                                        "You already have a pending teleport request to this player!")
+                                        .color(TextColors.RED)
+                                        .build()
+                        );
+                    } else if (result == 2) {
+                        requester.sendMessage(
+                                Text.builder(
+                                        "This player can't recieve teleport requests")
+                                        .color(TextColors.RED)
+                                        .build()
+                        );
+                    }
+                } else {
                     requester.sendMessage(
                             Text.builder(
-                                    "You already have a pending teleport request to this player!")
-                                    .color(TextColors.RED)
-                                    .build()
-                    );
-                } else if (result == 2) {
-                    requester.sendMessage(
-                            Text.builder(
-                                    "This player can't recieve teleport requests")
+                                    "You must specify an online player to teleport to!")
                                     .color(TextColors.RED)
                                     .build()
                     );
                 }
-            } else {
-                requester.sendMessage(
-                        Text.builder(
-                                "You must specify an online player to teleport to!")
-                                .color(TextColors.RED)
-                                .build()
-                );
             }
         }
         return CommandResult.success();

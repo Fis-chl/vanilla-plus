@@ -21,6 +21,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Handles all tprequest related actions.
+ * Does NOT handle regular warps.
+ */
 public class TeleportHandler {
 
     private final Path configDir;
@@ -28,6 +32,11 @@ public class TeleportHandler {
     private final List<TeleportRequest> currentRequests;
     private final HashMap<UUID, Boolean> tpPreferences;
 
+    /**
+     * Constructor.
+     * @param configDir the folder containing all config files for the plugin
+     * @param logger logger to print out information to the console
+     */
     public TeleportHandler(Path configDir, Logger logger) {
         this.configDir = configDir;
         this.logger = logger;
@@ -42,6 +51,14 @@ public class TeleportHandler {
         ).interval(7L, TimeUnit.SECONDS).submit(plugin);
     }
 
+    /**
+     * Creates a new teleport request with the given requester and destination.
+     * New requests won't be made if the requester has a pending outgoing request to the same destination player.
+     * They also won't be made if the destination player has turned off teleport requests.
+     * @param pRequester the player requesting to teleport
+     * @param pDestination the destination player for the request
+     * @return int value depending on if the request was made or not
+     */
     public int createRequest(Player pRequester, Player pDestination) {
         // Create a new teleport request with the specified requester and destination
         UUID requester = pRequester.getUniqueId();
@@ -53,7 +70,7 @@ public class TeleportHandler {
         if (cRequest != null && cRequest.getRequester().equals(requester) && cRequest.getDestination().equals(destination)) {
             return 0;
         }
-        cancellAllExistingRequests(requester);
+        cancelOutgoingRequests(requester);
         if (getRequest(requester) == null) {
             TeleportRequest newRequest = new TeleportRequest(requester, destination);
             currentRequests.add(newRequest);
@@ -92,15 +109,20 @@ public class TeleportHandler {
         }
     }
 
+    /**
+     * Teleports the player from the last received request to the approving player.
+     * @param destination the id of the accepting player
+     * @return true or false depending on if the player has any pending requests or not
+     */
     public boolean acceptRequest(UUID destination) {
         // Accept the last teleport request sent to the user
-        List<TeleportRequest> requests = getRequestsToUser(destination);
+        List<TeleportRequest> requests = getIncomingRequests(destination);
         if (requests.size() > 0) {
             // Accept the last request sent to the user and cancel all others
             TeleportRequest acceptedRequest = requests.get(requests.size() - 1);
             Player pRequester = Sponge.getServer().getPlayer(acceptedRequest.getRequester()).orElse(null);
             Player pDestination = Sponge.getServer().getPlayer(acceptedRequest.getDestination()).orElse(null);
-            cancelAllPendingRequests(destination);
+            cancelIncomingRequests(destination);
             if (pRequester != null && pDestination != null) {
                 // Inform and teleport both players
                 pRequester.sendMessage(
@@ -129,8 +151,13 @@ public class TeleportHandler {
         }
     }
 
+    /**
+     * Denies all requests the player has received.
+     * @param destination the id of the receiving player
+     * @return true or false depending on if the player had any requests or not
+     */
     public boolean denyRequest(UUID destination) {
-        List<TeleportRequest> requests = getRequestsToUser(destination);
+        List<TeleportRequest> requests = getIncomingRequests(destination);
         Player pDestination = Sponge.getServer().getPlayer(destination).orElse(null);
         // Deny all requests
         if (requests.size() < 1) {
@@ -151,7 +178,11 @@ public class TeleportHandler {
         return true;
     }
 
-    private void cancelAllPendingRequests(UUID destination) {
+    /**
+     * Cancels all pending teleport requests that have the given player as their destination.
+     * @param destination the id of the destination to cancel all incoming requests for
+     */
+    private void cancelIncomingRequests(UUID destination) {
         // Cancel all the previous requests sent to this user
         for (TeleportRequest request : currentRequests) {
             if (request.getDestination().equals(destination)) {
@@ -160,7 +191,11 @@ public class TeleportHandler {
         }
     }
 
-    private void cancellAllExistingRequests(UUID requester) {
+    /**
+     * Cancels all pending teleport requests that have the given player as their requester.
+     * @param requester the id of the requester to cancel all outgoing requests for
+     */
+    private void cancelOutgoingRequests(UUID requester) {
         // Cancel all the existing requests the user has made
         for (TeleportRequest request : currentRequests) {
             if (request.getRequester().equals(requester)) {
@@ -169,7 +204,12 @@ public class TeleportHandler {
         }
     }
 
-    private List<TeleportRequest> getRequestsToUser(UUID destination) {
+    /**.
+     * Get all the pending requests that have the given player as their destination.
+     * @param destination the id of the destination to get all incoming requests for
+     * @return list of all requests that have the given player as their destination
+     */
+    private List<TeleportRequest> getIncomingRequests(UUID destination) {
         // Get all teleport requests that have the specified user as their destination
         List<TeleportRequest> requests = new ArrayList<>();
         for (TeleportRequest request : currentRequests) {
@@ -180,6 +220,11 @@ public class TeleportHandler {
         return requests;
     }
 
+    /**
+     * Cancel the currently pending outgoing request for the given user.
+     * @param requester the id of the player to cancel a request for
+     * @return true or false depending on if the player had any outgoing requests
+     */
     public boolean cancelRequest(UUID requester) {
         // Cancel a teleport request from the sender if it isn't already cancelled
         TeleportRequest request = getRequest(requester);
@@ -191,6 +236,11 @@ public class TeleportHandler {
         }
     }
 
+    /**
+     * Get the currently pending request for the given player.
+     * @param requester the id of the player who has made the request
+     * @return existing {TeleportRequest} if it exists, otherwise null
+     */
     private TeleportRequest getRequest(UUID requester) {
         // Check if the player has a currently pending teleport request
         // Return that request if they do, else return null
@@ -205,6 +255,11 @@ public class TeleportHandler {
         return null;
     }
 
+    /**
+     * Change the teleport preferences for the given player.
+     * @param player the player to change the teleport preferences for
+     * @return int value depending on the change made to the player's teleport preferences
+     */
     public int changePlayerTpData(Player player) {
         // Toggles the player's preference in the hashmap
         UUID playerId = player.getUniqueId();
@@ -225,6 +280,10 @@ public class TeleportHandler {
         }
     }
 
+    /**
+     * Create default teleport preferences for the given player.
+     * @param player the player to make the default teleport preference data for
+     */
     public void createPlayerTpData(Player player) {
         UUID playerId = player.getUniqueId();
         if (!tpPreferences.containsKey(playerId)) {
@@ -233,6 +292,9 @@ public class TeleportHandler {
         }
     }
 
+    /**
+     * Load all player teleport preferences from the teleportdata.hocon file.
+     */
     private void loadPlayerTpData() {
         // Load all player tp preferences into the dictionary
         Path tpPath = Paths.get(configDir.toString(), "teleportdata.hocon");
@@ -259,6 +321,10 @@ public class TeleportHandler {
         }
     }
 
+    /**
+     * Update the teleportdata.hocon for a given player.
+     * @param player the player to update teleport preferences for
+     */
     private void updatePlayerTpData(Player player) {
         // Update and save the config file if a player changes their toggle
         Path tpPath = Paths.get(configDir.toString(), "teleportdata.hocon");
