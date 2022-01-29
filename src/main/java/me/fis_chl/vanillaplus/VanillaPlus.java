@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import me.fis_chl.vanillaplus.Command.*;
 import me.fis_chl.vanillaplus.Listener.PlayerJoinListener;
 import me.fis_chl.vanillaplus.Teleport.TeleportHandler;
+import me.fis_chl.vanillaplus.Warp.WarpHandler;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.GenericArguments;
@@ -35,6 +36,7 @@ public class VanillaPlus {
     private Path configDir;
 
     private TeleportHandler teleportHandler;
+    private WarpHandler warpHandler;
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
@@ -49,12 +51,14 @@ public class VanillaPlus {
             }
         }
         teleportHandler = new TeleportHandler(configDir, logger);
+        warpHandler = new WarpHandler(configDir, logger);
         registerCommands();
         registerListeners();
         logger.info("Loaded successfully!");
     }
 
     private void registerCommands() {
+        // Teleport commands
         // tpa command
         CommandSpec tpaSpec = CommandSpec.builder()
                 .description(Text.of("Request to teleport to the specified player"))
@@ -93,6 +97,25 @@ public class VanillaPlus {
                 .executor(new TptoggleCommand(teleportHandler))
                 .build();
         registerCommand(tptoggleSpec, "tptoggle", "tpt");
+
+        // Warp commands
+        // setwarp command
+        CommandSpec setwarpSpec = CommandSpec.builder()
+                .description(Text.of("Set a warp with the specified name"))
+                .permission("vp.setwarp")
+                .arguments(
+                        GenericArguments.onlyOne(GenericArguments.string(Text.of("warpName")))
+                )
+                .executor(new SetWarpCommand(warpHandler))
+                .build();
+        registerCommand(setwarpSpec, "setwarp", "swarp", "createwarp", "cwarp");
+        // listwarps command
+        CommandSpec listwarpSpec = CommandSpec.builder()
+                .description(Text.of("List all available warps"))
+                .permission("vp.listwarps")
+                .executor(new ListWarpsCommand(warpHandler))
+                .build();
+        registerCommand(listwarpSpec, "listwarps", "warps");
     }
 
     private void registerCommand(CommandSpec toRegister, String... alias) {
