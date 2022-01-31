@@ -1,4 +1,4 @@
-package me.fis_chl.vanillaplus.Command;
+package me.fis_chl.vanillaplus.Warp.Command;
 
 import me.fis_chl.vanillaplus.Warp.WarpHandler;
 import org.spongepowered.api.command.CommandException;

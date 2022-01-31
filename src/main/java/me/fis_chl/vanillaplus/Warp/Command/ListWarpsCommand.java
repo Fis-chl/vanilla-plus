@@ -1,4 +1,4 @@
-package me.fis_chl.vanillaplus.Command;
+package me.fis_chl.vanillaplus.Warp.Command;
 
 import me.fis_chl.vanillaplus.Warp.Warp;
 import me.fis_chl.vanillaplus.Warp.WarpHandler;
@@ -30,11 +30,15 @@ public class ListWarpsCommand implements CommandExecutor {
             initialText = Text.join(initialText,
                             Text.builder(
                                     "- "
-                            ).color(TextColors.GOLD).build(),
-                            Text.builder(
-                                    warp.getName() + "\n"
-                            ).color(TextColors.GREEN).build()
+                            ).color(TextColors.GOLD).build()
             );
+            if (warps.indexOf(warp) < warps.size() - 1) {
+                initialText = Text.join(initialText,
+                        Text.builder(
+                                warp.getName() + "\n"
+                        ).color(TextColors.GREEN).build()
+                );
+            }
         }
         src.sendMessage(initialText);
         return CommandResult.success();

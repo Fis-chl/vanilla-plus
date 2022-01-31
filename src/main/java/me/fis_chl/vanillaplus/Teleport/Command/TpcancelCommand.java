@@ -1,4 +1,4 @@
-package me.fis_chl.vanillaplus.Command;
+package me.fis_chl.vanillaplus.Teleport.Command;
 
 import me.fis_chl.vanillaplus.Teleport.TeleportHandler;
 import org.spongepowered.api.command.CommandException;
@@ -10,25 +10,30 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
-public class TpacceptCommand implements CommandExecutor {
+public class TpcancelCommand implements CommandExecutor {
 
     private final TeleportHandler teleportHandler;
 
-    public TpacceptCommand(TeleportHandler teleportHandler) {
+    public TpcancelCommand(TeleportHandler teleportHandler) {
         this.teleportHandler = teleportHandler;
     }
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         if (src instanceof Player) {
-            Player pDestination = (Player) src;
-            boolean acceptedRequest = teleportHandler.acceptRequest(pDestination.getUniqueId());
-            if (!acceptedRequest) {
-                pDestination.sendMessage(
+            Player player = (Player) src;
+            boolean result = teleportHandler.cancelRequest(player.getUniqueId());
+            if (result) {
+                player.sendMessage(
                         Text.builder(
-                                "There are no pending teleport requests!")
-                                .color(TextColors.RED)
-                                .build()
+                                "Cancelled request successfully"
+                        ).color(TextColors.GREEN).build()
+                );
+            } else {
+                player.sendMessage(
+                        Text.builder(
+                                "You don't have any pending teleport requests!"
+                        ).color(TextColors.RED).build()
                 );
             }
         }

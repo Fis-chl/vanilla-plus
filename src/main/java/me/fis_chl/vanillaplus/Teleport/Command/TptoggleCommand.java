@@ -1,4 +1,4 @@
-package me.fis_chl.vanillaplus.Command;
+package me.fis_chl.vanillaplus.Teleport.Command;
 
 import me.fis_chl.vanillaplus.Teleport.TeleportHandler;
 import org.spongepowered.api.command.CommandException;
